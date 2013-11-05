@@ -1,0 +1,35 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage{url,graphicx,tabularx,array,geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{paralist}
+\usepackage{latexsym}
+\usepackage{fancyhdr}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{color}
+
+\pagestyle{fancy}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\setlength{\parskip}{1ex} %--skip lines between paragraphs
+\setlength{\parindent}{0pt} %--don't indent paragraphs
+
+%-- Commands for header
+\newcommand{\headerline}{\begin{tabularx}{\textwidth}{X>{\raggedleft}X}\hline\\\end{tabularx}\\[-0.5cm]}
+\newcommand{\headerleftright}[2]{\begin{tabularx}{\textwidth}{X>{\raggedleft}X}#1%
+& #2\\\end{tabularx}\\[-0.5cm]}
+%\linespread{2} %-- Uncomment for Double Space
+
+\begin{document}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhf{}
+\fancyhead[L]{
+\headerleftright{\textbf{IT-Security}}{David Elvers, Daniel Schmidt}
+\fancyfoot[C]{\thepage}
+
+\end{document}
