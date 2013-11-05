@@ -1,0 +1,114 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage{url,graphicx,tabularx,array,geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{paralist}
+\usepackage{latexsym}
+\usepackage{fancyhdr}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{color}
+
+\pagestyle{fancy}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\setlength{\parskip}{1ex} %--skip lines between paragraphs
+\setlength{\parindent}{0pt} %--don't indent paragraphs
+
+%-- Commands for header
+\newcommand{\headerline}{\begin{tabularx}{\textwidth}{X>{\raggedleft}X}\hline\\\end{tabularx}\\[-0.5cm]}
+\newcommand{\headerleftright}[2]{\begin{tabularx}{\textwidth}{X>{\raggedleft}X}#1%
+& #2\\\end{tabularx}\\[-0.5cm]}
+%\linespread{2} %-- Uncomment for Double Space
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true
+  tabsize=3
+}
+
+\begin{document}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhf{}
+\fancyhead[L]{
+\headerleftright{\textbf{IT-Security}}{David Elvers, Daniel Schmidt}}
+\fancyfoot[C]{\thepage}
+
+\section*{Aufgabe 1}
+In den Cookies werden einerseits die Sessiondaten gespeichert, sprich die ID unter der die Session auf dem Server gespeichert ist. In dieser wird der aktuelle Zustand der Applikation gespeichert. Es werden auch dauerhafte Einstellungen wie die Sprache oder ähnliches in den Cookies gespeichert.
+
+Der LocalStorage wird für Nutzerspezifische Daten verwendet, sprich cachingspezifische Daten(Beispsielsweise können Fonts oder Sounds gut damit gecached werden) und anderes, was über ein Schließen der Webseite hinaus verfügbar sein soll.
+
+Der SessionStorage wird für das Caching der aktuell aufgerufenen Seiten verwendet (zumindest bei Amazon.de) und generell für Daten die nach dem Schließen nicht mehr relevant sind. Hier wird bei Facebook auch ein Log über die Navigationspunkte geführt.
+
+
+Generell ist anzumerken, dass der WebStorage bisher noch unbegrenzt ist, es aber für Cookies eine Maximalgröße gibt.
+
+\section*{Aufgabe 2}
+
+Cookies sind an das document Objekt im DOM gebunden und einfach als Simikolonseparierter String angebunden. Die Key-Value Paare sind per = getrennt, dementsprechend lässt sich beispielsweise eine Array von Key-Value Arrays so erzeugen:
+
+\begin{lstlisting}
+function getCookies(){
+	return document.cookie.split(';').map(function(item){
+		return item.split('=');
+	});
+}
+\end{lstlisting}
+
+Nehmen wir an wir würden einen Wert hier drin geändert haben und den Cookie wieder speichern, so ginge dies über:
+
+\begin{lstlisting}
+function setCookies(cookies){
+	return document.cookie = cookies.map(function(item){return item.join('=');}).join(';');
+}
+\end{lstlisting}
+
+Die WebStorages hingegen sind deutlich moderner und lassen sich direkt als Key-Value Store nutzen. Folgendes Objekt abstrahiert den Webstorage:
+
+\begin{lstlisting}
+ 
+var Storage = (function() {
+  function Storage(storage) {
+    this.storage = storage;
+  }
+  var store = {
+	setItem: function (key, value){
+		return this.storage.setItem(key, value);
+	},
+	getItem: function (key) {
+		return this.storage.getItem(key);
+	},
+	removeItem: function (key){
+		return this.storage.removeItem(key);
+	}
+  }
+  return store;
+
+})();
+
+var session = new Storage(sessionStorage);
+var local = new Storage(localStorage);
+\end{lstlisting}
+\end{document}
