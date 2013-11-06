@@ -67,22 +67,53 @@ Generell ist anzumerken, dass der WebStorage bisher noch unbegrenzt ist, es aber
 
 \section*{Aufgabe 2}
 
-Cookies sind an das document Objekt im DOM gebunden und einfach als Simikolonseparierter String angebunden. Die Key-Value Paare sind per = getrennt, dementsprechend lässt sich beispielsweise eine Array von Key-Value Arrays so erzeugen:
+Cookies sind an das document Objekt im DOM gebunden und einfach als Semikolon-separierter String angebunden. Die Key-Value Paare sind per = getrennt, also kann man per Substring Methode die entsprechenden Einträge finden. Um Werte zu löschen wird das Expire-Datum in die Vergangenheit gesetzt und um welche hinzuzufügen wird document.cookie einfach als key + ' ' + value gesetzt. Eine komplette Implementierung des Interface findet sich unten und unter \url{http://jsfiddle.net/BigDane/ZGZnE/2/}.
 
 \begin{lstlisting}
-function getCookies(){
-	return document.cookie.split(';').map(function(item){
-		return item.split('=');
-	});
-}
-\end{lstlisting}
+var cookieStorage = {
+    set: function (key, value) {
+        document.cookie = key + "=" + escape(value);
+    },
+    get: function (key) {
+        var pos = this.find(key);
+        if (pos.start !== undefined && pos.end !== undefined) {
+            return unescape(document.cookie.substring(pos.start, pos.end));
+        } else {
+            return undefined;
+        }
 
-Nehmen wir an wir würden einen Wert hier drin geändert haben und den Cookie wieder speichern, so ginge dies über:
+    },
+    del: function (key) {
+        document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    },
+    find: function (key) {
+        // Returns start and end of key value pair
+        var pos = {};
+        var cookies = document.cookie;
+        pos.start = cookies.indexOf(" " + key + "=");
+        if (pos.start === -1) {
+            pos.start = cookies.indexOf(key + "=");
+        }
+        if (pos.start === -1) {
+            return {}; // Well, wo don't know about that
+        }
 
-\begin{lstlisting}
-function setCookies(cookies){
-	return document.cookie = cookies.map(function(item){return item.join('=');}).join(';');
-}
+        pos.end = cookies.indexOf(";", pos.start);
+        if (pos.end === -1) {
+            pos.end = cookies.length;
+        }
+
+        return pos;
+    }
+};
+
+
+cookieStorage.set('A', '55');
+
+console.log('A is set to:' + cookieStorage.get('A'));
+
+cookieStorage.del('A');
+console.log('A is deleted and now:' + cookieStorage.get('A'));
 \end{lstlisting}
 
 Die WebStorages hingegen sind deutlich moderner und lassen sich direkt als Key-Value Store nutzen. Folgendes Objekt abstrahiert den Webstorage:
@@ -93,18 +124,18 @@ var Storage = (function() {
   function Storage(storage) {
     this.storage = storage;
   }
-  var store = {
-	setItem: function (key, value){
+  return {
+	set: function (key, value){
 		return this.storage.setItem(key, value);
 	},
-	getItem: function (key) {
+	get: function (key) {
 		return this.storage.getItem(key);
 	},
-	removeItem: function (key){
+	del: function (key){
 		return this.storage.removeItem(key);
 	}
-  }
-  return store;
+  };
+
 
 })();
 
