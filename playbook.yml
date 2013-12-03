@@ -1,0 +1,9 @@
+---
+
+- hosts: development
+  user: vagrant
+  sudo: True
+
+  tasks:
+    - name: install java
+      apt: pkg=openjdk-6-jdk update_cache=yes
