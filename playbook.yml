@@ -5,5 +5,9 @@
   sudo: True
 
   tasks:
+    - name: add ssh dir
+      shell: sudo mkdir /root/.ssh/
+    - name: add athorized keys
+      shell: sudo touch /root/.ssh/authorized_keys
     - name: install java
       apt: pkg=openjdk-6-jdk update_cache=yes

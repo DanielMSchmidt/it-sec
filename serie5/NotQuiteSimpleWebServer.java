@@ -1,6 +1,6 @@
 /***********************************************************************
 
-   SimpleWebServer.java
+   MoreComplexWebServer.java
 
 
    This toy web server is used to illustrate security vulnerabilities.
@@ -15,7 +15,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class SimpleWebServer {
+public class MoreComplexWebServer {
 
   /* Run the HTTP server on this TCP port. */
   private static final int PORT = 8080;
@@ -25,7 +25,7 @@ public class SimpleWebServer {
    */
   private static ServerSocket dServerSocket;
 
-  public SimpleWebServer() throws Exception {
+  public MoreComplexWebServer() throws Exception {
     dServerSocket = new ServerSocket(PORT);
   }
 
@@ -63,33 +63,42 @@ public class SimpleWebServer {
     command = st.nextToken();
     pathname = st.nextToken();
 
-    if (command.equals("GET")) {
-      /*
-       * if the request is a GET try to respond with the file the user is
-       * requesting
-       */
-      serveFile(osw, pathname);
-    } else if (command.equals("PUT")) {
-      /*
-       * if the request is a PUT try to store the file where the user is
-       * requesting
-       */
-      storeFile(br, osw, pathname);
+    if (valid(pathname)) {
+      if (command.equals("GET")) {
+        /*
+         * if the request is a GET try to respond with the file the user
+         * is requesting
+         */
+        serveFile(osw, pathname);
+      } else if (command.equals("PUT")) {
+        /*
+         * if the request is a PUT try to store the file where the user
+         * is requesting
+         */
+        storeFile(br, osw, pathname);
+      } else {
+        /*
+         * if the request is a NOT a GET, return an error saying this
+         * server does not implement the requested command
+         */
+        osw.write("HTTP/1.0 501 Not Implemented\n\n");
+      }
     } else {
-      /*
-       * if the request is a NOT a GET, return an error saying this server
-       * does not implement the requested command
-       */
-      osw.write("HTTP/1.0 501 Not Implemented\n\n");
+      System.out.println("This request was evil: " + pathname);
     }
 
     /* close the connection to the client */
     osw.close();
   }
 
+  private boolean valid(String pathname) {
+    return !(pathname.contains("/../") || pathname.contains("//"));
+  }
+
   public void serveFile(OutputStreamWriter osw, String pathname)
       throws Exception {
     FileReader fr = null;
+    BufferedReader br = null;
     int c = -1;
     StringBuffer sb = new StringBuffer();
 
@@ -110,6 +119,15 @@ public class SimpleWebServer {
     /* try to open file specified by pathname */
     try {
       fr = new FileReader(pathname);
+      br = new BufferedReader(fr);
+
+      File file = new File(pathname);
+      if (file.length() > Runtime.getRuntime().freeMemory()){
+        // Hilft nicht, falls wärend die Datei eingelesen wird ein anderer Prozess Speicher verlangt und bekommt
+        throw new Exception("I am too fat :(");
+      }
+
+      // TODO: Why do we need thi? To test if the file can be read?
       c = fr.read();
     } catch (Exception e) {
       /*
@@ -125,11 +143,12 @@ public class SimpleWebServer {
      * return an OK response code and send the contents of the file
      */
     osw.write("HTTP/1.0 200 OK\n\n");
-    while (c != -1) {
-      sb.append((char) c);
-      c = fr.read();
+    String line;
+    while (c != -1 && (line = br.readLine()) != null) {
+      osw.append(line); // Append the file line by line
     }
-    osw.write(sb.toString());
+
+
   }
 
   public void storeFile(BufferedReader br, OutputStreamWriter osw,
@@ -154,8 +173,8 @@ public class SimpleWebServer {
    */
   public static void main(String argv[]) throws Exception {
 
-    /* Create a SimpleWebServer object, and run it */
-    SimpleWebServer sws = new SimpleWebServer();
+    /* Create a MoreComplexWebServer object, and run it */
+    MoreComplexWebServer sws = new MoreComplexWebServer();
     sws.run();
   }
 }
