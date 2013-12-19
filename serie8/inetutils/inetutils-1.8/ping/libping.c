@@ -50,8 +50,6 @@ _ping_packetsize (PING * p)
 PING *
 ping_init (int type, int ident)
 {
-  /* TODO: Hey, maybe we just set another type here? */
-
   int fd;
   struct protoent *proto;
   PING *p;
@@ -174,8 +172,6 @@ my_echo_reply (PING * p, icmphdr_t * icmp)
 int
 ping_recv (PING * p)
 {
-  /* TODO: Add secret stuff here */
-
   socklen_t fromlen = sizeof (p->ping_from.ping_sockaddr);
   int n, rc;
   icmphdr_t *icmp;
