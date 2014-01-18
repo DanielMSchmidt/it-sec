@@ -1,0 +1,16 @@
+01_disable_useless_man_pages.patch
+02_remove_unused_opie_check.patch
+03_reduce_shared_lib_depends.patch
+22_syslogd_conf.patch
+30_ping-Abort-on-sendto-error.patch
+50_split_load_conffile.patch
+51_add_load_confdir_support.patch
+60_inetd_support_argless_services.patch
+61_inetd_listen_on_tcpmux_ports.patch
+62_inetd_change_ipv6_protocol_semantics.patch
+63_inetd_ipv6_sockaddrlen.patch
+64_telnetd_ipv6_sockaddrlen.patch
+70_ftbfs_non-linux.patch
+72_traceroute_fix_setsockopt.patch
+99_CVE-2011-4862.patch
+bad-patch

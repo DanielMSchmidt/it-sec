@@ -1,0 +1,174 @@
+#!/usr/bin/make -f
+
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+  conf_gnu_type += --build $(DEB_HOST_GNU_TYPE)
+else
+  conf_gnu_type += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
+CFLAGS = -Wall -g
+
+ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+# Override default upstream setuid mode, as they rejected this change.
+SUIDMODE="-o root -m 4755"
+
+# Set proper Provides
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+  syslogd_provides = linux-kernel-log-daemon
+endif
+ifeq ($(DEB_HOST_ARCH_OS),hurd)
+  tools_provides = net-tools
+endif
+
+D = $(CURDIR)/debian/tmp
+M = $(CURDIR)/debian/local/man
+mandir = usr/share/man
+man1dir = $(mandir)/man1
+man8dir = $(mandir)/man8
+
+configure: configure.ac
+	dh_testdir
+	
+	autoreconf -i
+
+config.status: configure
+	dh_testdir
+	
+	./configure \
+	  $(conf_gnu_type) \
+	  --disable-silent-rules \
+	  --prefix=/usr \
+	  --sysconfdir=/etc \
+	  --localstatedir=/var \
+	  --libexecdir=\$${prefix}/sbin \
+	  --mandir=\$${prefix}/share/man \
+	  --infodir=\$${prefix}/share/info \
+	  --with-shishi \
+	  --with-wrap \
+	  --with-pam
+
+build-indep:
+
+build-arch: debian/control config.status
+	dh_testdir
+	
+	$(MAKE) CFLAGS="$(CFLAGS)"
+
+build: build-indep build-arch
+
+# We need it forced on all builds.
+.PHONY: debian/control
+
+debian/control: debian/control.in
+	# Set proper Priority and Section
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+	sed \
+	  -e 's/@inetutils:Priority@/extra/g' \
+	  -e 's/@syslogd:Priority@/extra/g' \
+	< debian/control.in \
+	> debian/control
+else
+	sed \
+	  -e 's/@inetutils:Priority@/standard/g' \
+	  -e 's/@syslogd:Priority@/required/g' \
+	< debian/control.in \
+	> debian/control
+endif
+
+clean:
+	dh_testdir
+	dh_testroot
+	
+	[ ! -f Makefile ] || $(MAKE) distclean
+	
+	# Cleanup the mess after having run autoreconf ...
+	find -name Makefile.in | xargs rm -f
+	rm -f aclocal.m4 config.hin configure
+	
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs -a
+	
+	$(MAKE) install DESTDIR=$(D) SUIDMODE=$(SUIDMODE)
+	
+	# Create man page directories
+	mkdir -p $(D)/$(man1dir)
+	mkdir -p $(D)/$(man8dir)
+	
+	# Move ping to /bin
+	mkdir -p $(D)/bin
+	mv $(D)/usr/bin/ping $(D)/bin/
+	
+	# Rename ifconfig to not break existing systems using net-tools
+	mv $(D)/usr/bin/ifconfig $(D)/usr/bin/inetutils-ifconfig
+	cp man/ifconfig.1 $(D)/usr/share/man/man1/inetutils-ifconfig.1
+	
+	# Rename inetd to be able to coexist with not purged netkit-inetd
+	mv $(D)/usr/sbin/inetd $(D)/usr/sbin/inetutils-inetd
+	cp $(M)/inetd.8 $(D)/$(man8dir)/inetutils-inetd.8
+	
+	# Needed to enable alternatives
+	mv $(D)/usr/bin/telnet $(D)/usr/bin/inetutils-telnet
+	cp $(M)/telnet.1 $(D)/$(man1dir)/inetutils-telnet.1
+	mv $(D)/usr/bin/ftp $(D)/usr/bin/inetutils-ftp
+	cp $(M)/ftp.1 $(D)/$(man1dir)/inetutils-ftp.1
+	mv $(D)/usr/bin/talk $(D)/usr/bin/inetutils-talk
+	cp $(M)/talk.1 $(D)/$(man1dir)/inetutils-talk.1
+	mv $(D)/usr/bin/traceroute $(D)/usr/bin/inetutils-traceroute
+	cp man/traceroute.1 $(D)/$(man1dir)/inetutils-traceroute.1
+
+binary-indep:
+# Nothing to do.
+
+binary-arch: install
+	dh_testdir
+	dh_testroot
+	
+	dh_install -a --sourcedir=$(D)
+	# Install ping6 only if built
+	if [ -x $(D)/usr/bin/ping6 ]; then \
+	  cp -a $(D)/usr/bin/ping6 \
+	        $(CURDIR)/debian/inetutils-ping/bin/; \
+	fi
+	dh_installdebconf -a
+	dh_installdocs -a -A NEWS AUTHORS THANKS
+	dh_installexamples -a
+	dh_installinit -pinetutils-syslogd -- defaults 10 90
+	dh_installinit -a -Ninetutils-syslogd
+	dh_installpam -pinetutils-ftpd --name ftp
+	dh_installlogrotate -a
+	dh_installman -a
+	dh_installinfo -a
+	dh_installchangelogs -a ChangeLog
+	dh_lintian
+	dh_link -a
+	dh_strip -a
+	dh_compress -a
+	# pings and traceroute are setuid
+	dh_fixperms -a -Xbin/ping -Xbin/ping6 -Xusr/bin/inetutils-traceroute
+	dh_installdeb -a
+	dh_shlibdeps -a
+	dh_gencontrol -a -- \
+	  -Vsyslogd:Provides="$(syslogd_provides)" \
+	  -Vtools:Provides="$(tools_provides)"
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+
+.PHONY: build-indep build-arch build build-udeb
+.PHONY: clean install binary-indep binary-arch binary
+

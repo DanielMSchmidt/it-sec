@@ -108,6 +108,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <unistd.h>
 
 #include <stdarg.h>
@@ -132,6 +133,7 @@
 int facilities_seen;
 
 const char *ConfFile = PATH_LOGCONF;	/* Default Configuration file.  */
+const char *ConfDir = PATH_LOGCONFD;	/* Default Configuration directory.  */
 const char *PidFile = PATH_LOGPID;	/* Default path to tuck pid.  */
 char ctty[] = PATH_CONSOLE;	/* Default console to send message info.  */
 
@@ -249,6 +251,8 @@ void die (int);
 void doexit (int);
 void domark (int);
 void fprintlog (struct filed *, const char *, int, const char *);
+static int load_conffile (const char *, struct filed **);
+static void load_confdir (struct filed **);
 void init (int);
 void logerror (const char *);
 void logmsg (int, const char *, const char *, int);
@@ -327,6 +331,9 @@ static struct argp_option argp_options[] = {
   {"rcfile", 'f', "FILE", 0, "override configuration file (default: "
    PATH_LOGCONF ")",
    GRP+1},
+  {"rcdir", 'D', "DIR", 0, "override configuration directory (default: "
+   PATH_LOGCONFD ")",
+   GRP+1},
   {"socket", 'p', "FILE", 0, "override default unix domain socket " PATH_LOG,
    GRP+1},
   {"sync", 'S', NULL, 0, "force a file sync on every line", GRP+1},
@@ -396,6 +403,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     case 'f':
       ConfFile = arg;
+      break;
+
+    case 'D':
+      ConfDir = arg;
       break;
 
     case 'p':
@@ -1541,12 +1552,11 @@ die (int signo)
   exit (0);
 }
 
-/* INIT -- Initialize syslogd from configuration table.  */
-RETSIGTYPE
-init (int signo ARG_UNUSED)
+static int
+load_conffile (const char *filename, struct filed **nextp)
 {
   FILE *cf;
-  struct filed *f, *next, **nextp;
+  struct filed *f;
   char *p;
 #ifndef LINE_MAX
 # define LINE_MAX 2048
@@ -1555,60 +1565,19 @@ init (int signo ARG_UNUSED)
   char *cbuf;
   char *cline;
   int cont_line = 0;
-  struct servent *sp;
-
-  dbg_printf ("init\n");
-  sp = getservbyname ("syslog", "udp");
-  if (sp == NULL)
-    {
-      errno = 0;
-      logerror ("network logging disabled (syslog/udp service unknown).");
-      logerror
-	("see syslogd(8) for details of whether and how to enable it.");
-      return;
-    }
-  LogPort = sp->s_port;
-
-  /* Close all open log files.  */
-  Initialized = 0;
-  for (f = Files; f != NULL; f = next)
-    {
-      /* Flush any pending output.  */
-      if (f->f_prevcount)
-	fprintlog (f, LocalHostName, 0, (char *) NULL);
-
-      switch (f->f_type)
-	{
-	case F_FILE:
-	case F_TTY:
-	case F_CONSOLE:
-	case F_PIPE:
-	  close (f->f_file);
-	  break;
-	}
-      next = f->f_next;
-      free (f);
-    }
-  Files = NULL;
-  nextp = &Files;
-
-  facilities_seen = 0;
 
   /* Open the configuration file.  */
-  cf = fopen (ConfFile, "r");
+  cf = fopen (filename, "r");
   if (cf == NULL)
     {
-      dbg_printf ("cannot open %s\n", ConfFile);
+      dbg_printf ("cannot open %s\n", filename);
       *nextp = (struct filed *) calloc (1, sizeof (*f));
       cfline ("*.ERR\t" PATH_CONSOLE, *nextp);
       (*nextp)->f_next = (struct filed *) calloc (1, sizeof (*f));
       cfline ("*.PANIC\t*", (*nextp)->f_next);
       Initialized = 1;
-      return;
+      return 1;
     }
-
-  /* Foreach line in the conf table, open that file.  */
-  f = NULL;
 
   /* Allocate a buffer for line parsing.  */
   cbuf = malloc (line_max);
@@ -1617,7 +1586,7 @@ init (int signo ARG_UNUSED)
       /* There is no graceful recovery here.  */
       dbg_printf ("cannot allocate space for configuration\n");
       fclose (cf);
-      return;
+      return 0;
     }
   cline = cbuf;
 
@@ -1658,7 +1627,7 @@ init (int signo ARG_UNUSED)
 	      dbg_printf ("cannot allocate space configuration\n");
 	      fclose (cf);
 	      free (cbuf);
-	      return;
+	      return 0;
 	    }
 	  else
 	    cbuf = tmp;
@@ -1704,6 +1673,103 @@ init (int signo ARG_UNUSED)
   /* Close the configuration file.  */
   fclose (cf);
   free (cbuf);
+
+  return 1;
+}
+
+static void
+load_confdir (struct filed **nextp)
+{
+  struct dirent *dent;
+  DIR *dir;
+
+  if (!load_conffile (ConfFile, nextp))
+    return;
+
+  dir = opendir (ConfDir);
+  if (!dir)
+    {
+      dbg_printf ("cannot open %s\n", ConfDir);
+      return;
+    }
+
+
+  while ((dent = readdir (dir)) != NULL) {
+    struct stat st;
+    char *file;
+
+    file = malloc (strlen (ConfDir) + 1 + strlen (dent->d_name) + 1);
+    if (!file)
+      {
+        dbg_printf ("cannot allocate space for configuration filename\n");
+        return;
+      }
+
+    sprintf(file, "%s/%s", ConfDir, dent->d_name);
+
+    if (stat(file, &st) != 0)
+      {
+        dbg_printf ("cannot stat file configuration file\n");
+        continue;
+      }
+
+    if (S_ISREG(st.st_mode))
+      load_conffile(file, nextp);
+
+    free(file);
+  }
+
+  closedir(dir);
+}
+
+/* INIT -- Initialize syslogd from configuration table.  */
+RETSIGTYPE
+init (int signo ARG_UNUSED)
+{
+  struct filed *f, *next, **nextp;
+  struct servent *sp;
+
+  dbg_printf ("init\n");
+  sp = getservbyname ("syslog", "udp");
+  if (sp == NULL)
+    {
+      errno = 0;
+      logerror ("network logging disabled (syslog/udp service unknown).");
+      logerror
+	("see syslogd(8) for details of whether and how to enable it.");
+      return;
+    }
+  LogPort = sp->s_port;
+
+  /* Close all open log files.  */
+  Initialized = 0;
+  for (f = Files; f != NULL; f = next)
+    {
+      /* Flush any pending output.  */
+      if (f->f_prevcount)
+	fprintlog (f, LocalHostName, 0, (char *) NULL);
+
+      switch (f->f_type)
+	{
+	case F_FILE:
+	case F_TTY:
+	case F_CONSOLE:
+	case F_PIPE:
+	  close (f->f_file);
+	  break;
+	}
+      next = f->f_next;
+      free (f);
+    }
+  Files = NULL;
+  nextp = &Files;
+
+  facilities_seen = 0;
+
+  /* Foreach line in the conf table, open that file.  */
+  f = NULL;
+
+  load_confdir (nextp);
 
   Initialized = 1;
 

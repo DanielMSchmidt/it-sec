@@ -35,4 +35,4 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/lib -I../lib	\
 LDADD = -L../libinetutils -linetutils \
         -L../libtelnet -ltelnet \
         ../lib/libgnu.a \
-	$(LIBTERMCAP) $(LIBUTIL) $(LIBCRYPT) $(LIBAUTH)
+	$(LIBTERMCAP) $(LIBUTIL) $(LIBAUTH)

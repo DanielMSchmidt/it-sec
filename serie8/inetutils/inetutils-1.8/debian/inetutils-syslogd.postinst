@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+# Move a conffile without triggering a dpkg question
+mv_conffile()
+{
+  oldconffile="$1"
+  newconffile="$2"
+
+  if [ -e "$oldconffile" ]; then
+    echo "Preserving user changes to $newconffile ..."
+    mv -f "$newconffile" "$newconffile".dpkg-new
+    mv -f "$oldconffile" "$newconffile"
+  fi
+}
+
+case "$1" in
+configure)
+  if dpkg --compare-versions "$2" lt "2:1.5.dfsg.1-5"; then
+    mv_conffile /etc/default/syslogd /etc/default/inetutils-syslogd
+  fi
+esac
+
+#DEBHELPER#
+
+exit 0
+

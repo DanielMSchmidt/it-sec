@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e
+
+# Prepare to move a conffile without triggering a dpkg question
+prep_mv_conffile()
+{
+  pkgname="$1"
+  conffile="$2"
+
+  if [ -e "$conffile" ]; then
+    md5sum="`md5sum \"$conffile\" | sed -e \"s/ .*//\"`"
+    old_md5sum="`dpkg-query -W -f='${Conffiles}' $pkgname | sed -n -e \"\\\\' $conffile '{s/ obsolete$//;s/.* //p}\"`"
+    if [ "$md5sum" = "$old_md5sum" ]; then
+      echo "Removing non modified obsolete conffile $conffile ..."
+      rm -f "$conffile"
+    fi
+ fi
+}
+
+case "$1" in
+install|upgrade)
+  if dpkg --compare-versions "$2" lt "2:1.5.dfsg.1-5"; then
+    prep_mv_conffile inetutils-syslogd /etc/default/syslogd
+  fi
+esac
+
+#DEBHELPER#
+
+exit 0
+

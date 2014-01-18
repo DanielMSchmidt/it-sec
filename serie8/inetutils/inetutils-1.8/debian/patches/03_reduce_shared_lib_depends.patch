@@ -1,0 +1,161 @@
+---
+ am/libcurses.m4     |   18 +++++++++---------
+ configure.ac        |    6 +++---
+ ftp/Makefile.am     |    3 +--
+ src/Makefile.am     |   16 +++++++++++-----
+ telnet/Makefile.am  |    2 +-
+ telnetd/Makefile.am |    2 +-
+ 6 files changed, 26 insertions(+), 21 deletions(-)
+
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -24,6 +24,9 @@ inetdaemon_PROGRAMS =
+ bin_PROGRAMS =
+ EXTRA_PROGRAMS =
+ 
++LDADD = \
++	../libinetutils/libinetutils.a \
++	../lib/libgnu.a
+ 
+ bin_PROGRAMS += @hostname_BUILD@
+ hostname_SOURCES = hostname.c
+@@ -35,6 +38,7 @@ EXTRA_PROGRAMS += logger
+ 
+ bin_PROGRAMS += @rcp_BUILD@
+ rcp_SOURCES = rcp.c
++rcp_LDADD = $(LDADD) $(LIBAUTH)
+ EXTRA_PROGRAMS += rcp
+ 
+ bin_PROGRAMS += @rexec_BUILD@
+@@ -43,10 +47,12 @@ EXTRA_PROGRAMS += rexec
+ 
+ bin_PROGRAMS += @rlogin_BUILD@
+ rlogin_SOURCES = rlogin.c
++rlogin_LDADD = $(LDADD) $(LIBAUTH)
+ EXTRA_PROGRAMS += rlogin
+ 
+ bin_PROGRAMS += @rsh_BUILD@
+ rsh_SOURCES = rsh.c
++rsh_LDADD = $(LDADD) $(LIBAUTH)
+ EXTRA_PROGRAMS += rsh
+ 
+ bin_PROGRAMS += @tftp_BUILD@
+@@ -55,6 +61,7 @@ EXTRA_PROGRAMS += tftp
+ 
+ bin_PROGRAMS += @traceroute_BUILD@
+ traceroute_SOURCES = traceroute.c
++traceroute_LDADD = ../libicmp/libicmp.a $(LDADD)
+ EXTRA_PROGRAMS += traceroute
+ 
+ inetdaemon_PROGRAMS += @inetd_BUILD@
+@@ -63,14 +70,17 @@ EXTRA_PROGRAMS += inetd
+ 
+ inetdaemon_PROGRAMS += @rexecd_BUILD@
+ rexecd_SOURCES = rexecd.c
++rexecd_LDADD = $(LDADD) $(LIBCRYPT)
+ EXTRA_PROGRAMS += rexecd
+ 
+ inetdaemon_PROGRAMS += @rlogind_BUILD@
+ rlogind_SOURCES = rlogind.c
++rlogind_LDADD = $(LDADD) $(LIBUTIL) $(LIBAUTH)
+ EXTRA_PROGRAMS += rlogind
+ 
+ inetdaemon_PROGRAMS += @rshd_BUILD@
+ rshd_SOURCES = rshd.c
++rshd_LDADD = $(LDADD) $(LIBAUTH)
+ EXTRA_PROGRAMS += rshd
+ 
+ inetdaemon_PROGRAMS += @syslogd_BUILD@
+@@ -83,17 +93,13 @@ EXTRA_PROGRAMS += tftpd
+ 
+ inetdaemon_PROGRAMS += @uucpd_BUILD@
+ uucpd_SOURCES = uucpd.c
++uucpd_LDADD = $(LDADD) $(LIBUTIL) $(LIBCRYPT)
+ EXTRA_PROGRAMS += uucpd
+ 
+ INCLUDES = -I$(top_srcdir)/lib \
+ 	-I$(top_srcdir)/libinetutils \
+ 	-I$(top_srcdir)/libicmp
+ 
+-LDADD = -L$(top_builddir)/libicmp -licmp \
+-	-L$(top_builddir)/libinetutils -linetutils \
+-	-L$(top_builddir)/lib ../lib/libgnu.a \
+-	$(LIBAUTH) $(LIBCRYPT) $(LIBUTIL)
+-
+ AM_CPPFLAGS = $(PATHDEF_BSHELL) $(PATHDEF_CONSOLE) $(PATHDEF_CP) $(PATHDEF_DEFPATH) $(PATHDEF_DEV) $(PATHDEF_INETDCONF) $(PATHDEF_INETDDIR) $(PATHDEF_INETDPID) $(PATHDEF_KLOG) $(PATHDEF_LOG) $(PATHDEF_LOGCONF) $(PATHDEF_LOGIN) $(PATHDEF_LOGPID) $(PATHDEF_NOLOGIN) $(PATHDEF_RLOGIN) $(PATHDEF_RSH) $(PATHDEF_TTY) $(PATHDEF_UTMP) $(PATHDEF_UUCICO)
+ 
+ SUIDMODE = -o root -m 4775
+--- a/configure.ac
++++ b/configure.ac
+@@ -137,8 +137,8 @@ AC_PROG_LN_S
+ gl_INIT
+ 
+ ### Checks for libraries.
+-AC_CHECK_LIB(nsl, inet_ntoa)
+-AC_CHECK_LIB(resolv, gethostname)
++#AC_CHECK_LIB(nsl, inet_ntoa)
++#AC_CHECK_LIB(resolv, gethostname)
+ AC_CHECK_LIB(socket, getpeername)
+ 
+ # See if a termcap library is available (under one of several names)
+@@ -189,7 +189,7 @@ AC_SUBST(LIBUTIL)
+ 
+ # See if we have libpam.a this is for ftpd.
+ if test "$with_pam" = yes ; then
+-  AC_CHECK_LIB(dl, dlopen)
++  #AC_CHECK_LIB(dl, dlopen)
+   AC_CHECK_LIB(pam, pam_authenticate, LIBPAM=-lpam)
+   if test "$ac_cv_lib_pam_pam_authenticate" = yes ; then
+      AC_DEFINE([WITH_PAM], 1, [Define to one if you have -lpam.])
+--- a/telnetd/Makefile.am
++++ b/telnetd/Makefile.am
+@@ -35,4 +35,4 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdi
+ LDADD = -L../libinetutils -linetutils \
+         -L../libtelnet -ltelnet \
+         ../lib/libgnu.a \
+-	$(LIBTERMCAP) $(LIBUTIL) $(LIBCRYPT) $(LIBAUTH)
++	$(LIBTERMCAP) $(LIBUTIL) $(LIBAUTH)
+--- a/telnet/Makefile.am
++++ b/telnet/Makefile.am
+@@ -30,4 +30,4 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdi
+ AM_CPPFLAGS=-DTERMCAP -DLINEMODE -DKLUDGELINEMODE -DENV_HACK
+ 
+ LDADD = -L../libinetutils -L../libtelnet -linetutils	\
+-	-ltelnet ../lib/libgnu.a $(LIBTERMCAP) $(LIBCRYPT) $(LIBAUTH)
++	-ltelnet ../lib/libgnu.a $(LIBTERMCAP) $(LIBAUTH)
+--- a/am/libcurses.m4
++++ b/am/libcurses.m4
+@@ -84,15 +84,15 @@ dnl LIBTERMCAP is defined with the appro
+ dnl
+ AC_DEFUN([IU_LIB_TERMCAP], [
+   AC_REQUIRE([IU_LIB_NCURSES])
+-  if test "$LIBNCURSES"; then
+-    LIBTERMCAP="$LIBNCURSES"
+-  else
+-    AC_CHECK_LIB(curses, tgetent, LIBTERMCAP=-lcurses)
+-    if test "$ac_cv_lib_curses_tgetent" = no; then
+-      AC_CHECK_LIB(termcap, tgetent, LIBTERMCAP=-ltermcap)
+-    fi
+-    if test "$ac_cv_lib_termcap_tgetent" = no; then
+-      AC_CHECK_LIB(termlib, tgetent, LIBTERMCAP=-ltermlib)
++  AC_CHECK_LIB(termcap, tgetent, LIBTERMCAP=-ltermcap)
++  if test "$ac_cv_lib_termcap_tgetent" = no; then
++    AC_CHECK_LIB(termlib, tgetent, LIBTERMCAP=-ltermlib)
++  fi
++  if test "$ac_cv_lib_termlib_tgetent" = no; then
++    if test "$LIBNCURSES"; then
++      LIBTERMCAP="$LIBNCURSES"
++    else
++      AC_CHECK_LIB(curses, tgetent, LIBTERMCAP=-lcurses)
+     fi
+   fi
+   AC_SUBST(LIBTERMCAP)])dnl
+--- a/ftp/Makefile.am
++++ b/ftp/Makefile.am
+@@ -30,5 +30,4 @@ noinst_HEADERS = extern.h ftp_var.h
+ INCLUDES = -I$(top_srcdir)/lib -I../lib -I$(top_srcdir)/libinetutils 
+ AM_CPPFLAGS = $(PATHDEF_TMP) $(PATHDEF_BSHELL)
+ 
+-READLINE = $(LIBREADLINE) $(LIBTERMCAP) $(LIBHISTORY)
+-LDADD = -L../libinetutils -linetutils ../lib/libgnu.a $(LIBGLOB) $(READLINE)
++LDADD = -L../libinetutils -linetutils ../lib/libgnu.a $(LIBGLOB) $(LIBREADLINE)

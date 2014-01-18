@@ -1,0 +1,1 @@
+cmd_/vagrant/serie8/A2/kroot.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.2.0-23-generic/scripts/module-common.lds --build-id  -o /vagrant/serie8/A2/kroot.ko /vagrant/serie8/A2/kroot.o /vagrant/serie8/A2/kroot.mod.o

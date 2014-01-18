@@ -45,7 +45,7 @@
 #ifdef HAVE_SYS_PTYVAR_H
 # include <sys/ptyvar.h>
 #endif
-#ifdef HAVE_STROPTS_H
+#if 0
 # include <stropts.h>
 #endif
 #include <sys/ioctl.h>

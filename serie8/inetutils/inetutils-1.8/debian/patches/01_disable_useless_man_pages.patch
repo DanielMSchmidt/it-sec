@@ -1,0 +1,42 @@
+From 51aff90bccf50ebee86c7e4945f2b059f93aefd2 Mon Sep 17 00:00:00 2001
+From: Guillem Jover <guillem@hadrons.org>
+Date: Wed, 9 Jun 2010 03:56:08 +0200
+Subject: [PATCH] Disable useless man pages
+
+---
+ Makefile.am         |    2 +-
+ configure.ac        |    2 -
+
+diff --git a/Makefile.am b/Makefile.am
+index 7af1c56..34d105b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -26,7 +26,7 @@ EXTRA_DIST = README-alpha paths ChangeLog.0
+ SUBDIRS = lib \
+ 	libinetutils libtelnet libicmp libls \
+ 	src telnet telnetd ftp ftpd talk talkd whois ping ifconfig \
+-	doc man \
++	doc \
+ 	tests
+ 
+ DISTCLEANFILES = pathdefs.make paths.defs $(PACKAGE)-$(VERSION).tar.gz
+diff --git a/configure.ac b/configure.ac
+index 2b60bde..f582074 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -133,7 +133,6 @@ AC_PROG_MAKE_SET
+ AC_PROG_RANLIB
+ AC_PROG_YACC
+ AC_PROG_LN_S
+-AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)
+ 
+ gl_INIT
+ 
+@@ -812,7 +811,6 @@ ping/Makefile
+ ifconfig/Makefile
+ ifconfig/system/Makefile
+ doc/Makefile
+-man/Makefile
+ tests/Makefile
+ confpaths.h:confpaths.h.in
+ ])

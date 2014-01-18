@@ -256,6 +256,7 @@ struct servtab
   sa_family_t se_family;	/* address family of the socket */
   char se_v4mapped;		/* 1 = accept v4mapped connection, 0 = don't */
   struct sockaddr_storage se_ctrladdr;	/* bound address */
+  socklen_t se_addrlen;	/* exact address length in use */
   unsigned se_refcnt;
   int se_count;			/* number started since se_time */
   struct timeval se_time;	/* start of se_count */
@@ -565,8 +566,8 @@ setup (struct servtab *sep)
   if (sep->se_family == AF_INET6)
     {
       /* Reverse the value of SEP->se_v4mapped, since otherwise if
-	 using `tcp' as a protocol type all connections will be mapped
-	 to IPv6, and with `tcp6' they get mapped IPv4 mapped to
+	 using `tcp6' as a protocol type all connections will be mapped
+	 to IPv6, and with `tcp6only' they get mapped IPv4 mapped to
 	 IPv6.  */
       int val = sep->se_v4mapped ? 0 : 1;
       if (setsockopt (sep->se_fd, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -587,7 +588,7 @@ setup (struct servtab *sep)
     syslog (LOG_ERR, "setsockopt (SO_REUSEADDR): %m");
 
   err = bind (sep->se_fd, (struct sockaddr *) &sep->se_ctrladdr,
-	      sizeof (sep->se_ctrladdr));
+	      sep->se_addrlen);
   if (err < 0)
     {
       /* If we can't bind with AF_INET6 try again with AF_INET.  */
@@ -802,7 +803,9 @@ expand_enter (struct servtab *sep)
 
   for (rp = result; rp != NULL; rp = rp->ai_next)
     {
+      memset (&sep->se_ctrladdr, 0, sizeof (sep->se_ctrladdr));
       memcpy (&sep->se_ctrladdr, rp->ai_addr, rp->ai_addrlen);
+      sep->se_addrlen = rp->ai_addrlen;
       cp = enter (sep);
       servent_setup (cp);
     }
@@ -1004,10 +1007,9 @@ getconfigent (FILE *fconfig, const char *file, size_t *line)
       sep->se_proto = newstr (argv[INETD_PROTOCOL]);
 
 #ifdef IPV6
-      /* We default to IPv6, in setup() we'll fall back to IPv4 if
-         it doesn't work.  */
-      sep->se_family = AF_INET6;
-      sep->se_v4mapped = 1;
+      /* We default to IPv4.  */
+      sep->se_family = AF_INET;
+      sep->se_v4mapped = 0;
 
       if ((strncmp (sep->se_proto, "tcp", 3) == 0)
 	  || (strncmp (sep->se_proto, "udp", 3) == 0))
@@ -1015,7 +1017,11 @@ getconfigent (FILE *fconfig, const char *file, size_t *line)
 	  if (sep->se_proto[3] == '6')
 	    {
 	      sep->se_family = AF_INET6;
-	      sep->se_v4mapped = 0;
+	      /* Check for tcp6only and udp6only.  */
+	      if (strcmp (&sep->se_proto[3], "6only") == 0)
+	        sep->se_v4mapped = 0;
+	      else
+	        sep->se_v4mapped = 1;
 	    }
 	  else if (sep->se_proto[3] == '4')
 	    {
@@ -1110,6 +1116,21 @@ getconfigent (FILE *fconfig, const char *file, size_t *line)
 	  sep->se_argv[i] = argv[INETD_SERVER_ARGS + i];
 	  argv[INETD_SERVER_ARGS + i] = 0;
 	}
+
+      /* If no arguments are provided, use server name as argv[0].  */
+      if (sep->se_argc == 1)
+	{
+	  const char *argv0 = NULL;
+
+	  argv0 = strrchr (sep->se_server, '/');
+	  if (argv0)
+	    argv0++;
+	  else
+	    argv0 = sep->se_server;
+
+	  sep->se_argv[0] = newstr (argv0);
+	}
+
       sep->se_argv[i] = NULL;
       break;
     }
@@ -1210,7 +1231,6 @@ fix_tcpmux ()
 
       serv.se_service = newstr ("tcpmux");
       serv.se_socktype = SOCK_STREAM;
-      serv.se_proto = newstr ("tcp");
       serv.se_checked = 1;
       serv.se_user = newstr ("root");
       serv.se_bi = bi_lookup (&serv);
@@ -1228,15 +1248,17 @@ fix_tcpmux ()
       serv.se_fd = -1;
       serv.se_type = NORM_TYPE;
 #ifdef IPV6
+      serv.se_proto = newstr ("tcp6");
       serv.se_family = AF_INET6;
       serv.se_v4mapped = 1;
 #else
+      serv.se_proto = newstr ("tcp");
       serv.se_family = AF_INET;
 #endif
       if (debug)
 	fprintf (stderr, "inserting default tcpmux entry\n");
       syslog (LOG_INFO, "inserting default tcpmux entry");
-      enter (&serv);
+      expand_enter (&serv);
     }
 }
 

@@ -84,15 +84,15 @@ dnl LIBTERMCAP is defined with the appropriate linker specification.
 dnl
 AC_DEFUN([IU_LIB_TERMCAP], [
   AC_REQUIRE([IU_LIB_NCURSES])
-  if test "$LIBNCURSES"; then
-    LIBTERMCAP="$LIBNCURSES"
-  else
-    AC_CHECK_LIB(curses, tgetent, LIBTERMCAP=-lcurses)
-    if test "$ac_cv_lib_curses_tgetent" = no; then
-      AC_CHECK_LIB(termcap, tgetent, LIBTERMCAP=-ltermcap)
-    fi
-    if test "$ac_cv_lib_termcap_tgetent" = no; then
-      AC_CHECK_LIB(termlib, tgetent, LIBTERMCAP=-ltermlib)
+  AC_CHECK_LIB(termcap, tgetent, LIBTERMCAP=-ltermcap)
+  if test "$ac_cv_lib_termcap_tgetent" = no; then
+    AC_CHECK_LIB(termlib, tgetent, LIBTERMCAP=-ltermlib)
+  fi
+  if test "$ac_cv_lib_termlib_tgetent" = no; then
+    if test "$LIBNCURSES"; then
+      LIBTERMCAP="$LIBNCURSES"
+    else
+      AC_CHECK_LIB(curses, tgetent, LIBTERMCAP=-lcurses)
     fi
   fi
   AC_SUBST(LIBTERMCAP)])dnl

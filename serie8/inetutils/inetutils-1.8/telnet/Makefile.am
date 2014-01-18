@@ -30,4 +30,4 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/lib -I../lib -I$(top_srcdir)/libinetu
 AM_CPPFLAGS=-DTERMCAP -DLINEMODE -DKLUDGELINEMODE -DENV_HACK
 
 LDADD = -L../libinetutils -L../libtelnet -linetutils	\
-	-ltelnet ../lib/libgnu.a $(LIBTERMCAP) $(LIBCRYPT) $(LIBAUTH)
+	-ltelnet ../lib/libgnu.a $(LIBTERMCAP) $(LIBAUTH)

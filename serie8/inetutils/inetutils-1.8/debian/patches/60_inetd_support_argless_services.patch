@@ -1,0 +1,40 @@
+From 93e33a312d840eed7a85faa1d5a56b2cd6846001 Mon Sep 17 00:00:00 2001
+From: Guillem Jover <guillem@hadrons.org>
+Date: Mon, 6 Sep 2010 08:52:59 +0200
+Subject: [PATCH] inetd: Inject server name in argv[0] when no arguments are provided
+
+* src/inetd.c (getconfigent): If se_argc == 1 inject the normalized
+se_server name into se_argv[0].
+---
+ src/inetd.c |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
+
+diff --git a/src/inetd.c b/src/inetd.c
+index 6fe9adf..354ae1d 100644
+--- a/src/inetd.c
++++ b/src/inetd.c
+@@ -1108,6 +1108,21 @@ getconfigent (FILE *fconfig, const char *file, size_t *line)
+ 	  sep->se_argv[i] = argv[INETD_SERVER_ARGS + i];
+ 	  argv[INETD_SERVER_ARGS + i] = 0;
+ 	}
++
++      /* If no arguments are provided, use server name as argv[0].  */
++      if (sep->se_argc == 1)
++	{
++	  const char *argv0 = NULL;
++
++	  argv0 = strrchr (sep->se_server, '/');
++	  if (argv0)
++	    argv0++;
++	  else
++	    argv0 = sep->se_server;
++
++	  sep->se_argv[0] = newstr (argv0);
++	}
++
+       sep->se_argv[i] = NULL;
+       break;
+     }
+-- 
+1.7.1
+

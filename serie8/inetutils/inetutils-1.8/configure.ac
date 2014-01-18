@@ -133,15 +133,13 @@ AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 AC_PROG_YACC
 AC_PROG_LN_S
-AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)
 
 gl_INIT
 
 ### Checks for libraries.
-AC_CHECK_LIB(nsl, inet_ntoa)
-AC_CHECK_LIB(resolv, gethostname)
+#AC_CHECK_LIB(nsl, inet_ntoa)
+#AC_CHECK_LIB(resolv, gethostname)
 AC_CHECK_LIB(socket, getpeername)
-AC_CHECK_LIB(opie, opiegenerator)
 
 # See if a termcap library is available (under one of several names)
 IU_LIB_TERMCAP
@@ -191,7 +189,7 @@ AC_SUBST(LIBUTIL)
 
 # See if we have libpam.a this is for ftpd.
 if test "$with_pam" = yes ; then
-  AC_CHECK_LIB(dl, dlopen)
+  #AC_CHECK_LIB(dl, dlopen)
   AC_CHECK_LIB(pam, pam_authenticate, LIBPAM=-lpam)
   if test "$ac_cv_lib_pam_pam_authenticate" = yes ; then
      AC_DEFINE([WITH_PAM], 1, [Define to one if you have -lpam.])
@@ -812,7 +810,6 @@ ping/Makefile
 ifconfig/Makefile
 ifconfig/system/Makefile
 doc/Makefile
-man/Makefile
 tests/Makefile
 confpaths.h:confpaths.h.in
 ])

@@ -1,0 +1,140 @@
+From 93bdf02b3d89ec8ef768d2949f637501ff67dc6d Mon Sep 17 00:00:00 2001
+From: Guillem Jover <guillem@hadrons.org>
+Date: Wed, 20 Feb 2008 05:29:26 +0200
+Subject: [PATCH] Add load_confdir support
+
+---
+ paths           |    1 
+ src/Makefile.am |    2 -
+ src/syslogd.c   |   57 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 58 insertions(+), 2 deletions(-)
+
+--- a/paths
++++ b/paths
+@@ -90,6 +90,7 @@ PATH_LASTLOG	<utmp.h> $(localstatedir)/l
+ PATH_LOG	<syslog.h> /dev/log
+ PATH_KLOG	<syslog.h> /dev/klog no
+ PATH_LOGCONF	$(sysconfdir)/syslog.conf
++PATH_LOGCONFD	$(sysconfdir)/syslog.d
+ PATH_LOGIN	x $(bindir)/login search:login
+ PATH_LOGPID	$(localstatedir)/run/syslog.pid
+ PATH_NOLOGIN	$(sysconfdir)/nologin
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -104,7 +104,7 @@ INCLUDES = -I$(top_srcdir)/lib \
+ 	-I$(top_srcdir)/libinetutils \
+ 	-I$(top_srcdir)/libicmp
+ 
+-AM_CPPFLAGS = $(PATHDEF_BSHELL) $(PATHDEF_CONSOLE) $(PATHDEF_CP) $(PATHDEF_DEFPATH) $(PATHDEF_DEV) $(PATHDEF_INETDCONF) $(PATHDEF_INETDDIR) $(PATHDEF_INETDPID) $(PATHDEF_KLOG) $(PATHDEF_LOG) $(PATHDEF_LOGCONF) $(PATHDEF_LOGIN) $(PATHDEF_LOGPID) $(PATHDEF_NOLOGIN) $(PATHDEF_RLOGIN) $(PATHDEF_RSH) $(PATHDEF_TTY) $(PATHDEF_UTMP) $(PATHDEF_UUCICO)
++AM_CPPFLAGS = $(PATHDEF_BSHELL) $(PATHDEF_CONSOLE) $(PATHDEF_CP) $(PATHDEF_DEFPATH) $(PATHDEF_DEV) $(PATHDEF_INETDCONF) $(PATHDEF_INETDDIR) $(PATHDEF_INETDPID) $(PATHDEF_KLOG) $(PATHDEF_LOG) $(PATHDEF_LOGCONF) $(PATHDEF_LOGCONFD) $(PATHDEF_LOGIN) $(PATHDEF_LOGPID) $(PATHDEF_NOLOGIN) $(PATHDEF_RLOGIN) $(PATHDEF_RSH) $(PATHDEF_TTY) $(PATHDEF_UTMP) $(PATHDEF_UUCICO)
+ 
+ SUIDMODE = -o root -m 4775
+ 
+--- a/src/syslogd.c
++++ b/src/syslogd.c
+@@ -108,6 +108,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <dirent.h>
+ #include <unistd.h>
+ 
+ #include <stdarg.h>
+@@ -132,6 +133,7 @@
+ int facilities_seen;
+ 
+ const char *ConfFile = PATH_LOGCONF;	/* Default Configuration file.  */
++const char *ConfDir = PATH_LOGCONFD;	/* Default Configuration directory.  */
+ const char *PidFile = PATH_LOGPID;	/* Default path to tuck pid.  */
+ char ctty[] = PATH_CONSOLE;	/* Default console to send message info.  */
+ 
+@@ -250,6 +252,7 @@ void doexit (int);
+ void domark (int);
+ void fprintlog (struct filed *, const char *, int, const char *);
+ static int load_conffile (const char *, struct filed **);
++static void load_confdir (struct filed **);
+ void init (int);
+ void logerror (const char *);
+ void logmsg (int, const char *, const char *, int);
+@@ -328,6 +331,9 @@ static struct argp_option argp_options[]
+   {"rcfile", 'f', "FILE", 0, "override configuration file (default: "
+    PATH_LOGCONF ")",
+    GRP+1},
++  {"rcdir", 'D', "DIR", 0, "override configuration directory (default: "
++   PATH_LOGCONFD ")",
++   GRP+1},
+   {"socket", 'p', "FILE", 0, "override default unix domain socket " PATH_LOG,
+    GRP+1},
+   {"sync", 'S', NULL, 0, "force a file sync on every line", GRP+1},
+@@ -399,6 +405,10 @@ parse_opt (int key, char *arg, struct ar
+       ConfFile = arg;
+       break;
+ 
++    case 'D':
++      ConfDir = arg;
++      break;
++
+     case 'p':
+       funix[0].name = arg;
+       funix[0].fd = -1;
+@@ -1667,6 +1677,51 @@ load_conffile (const char *filename, str
+   return 1;
+ }
+ 
++static void
++load_confdir (struct filed **nextp)
++{
++  struct dirent *dent;
++  DIR *dir;
++
++  if (!load_conffile (ConfFile, nextp))
++    return;
++
++  dir = opendir (ConfDir);
++  if (!dir)
++    {
++      dbg_printf ("cannot open %s\n", ConfDir);
++      return;
++    }
++
++
++  while ((dent = readdir (dir)) != NULL) {
++    struct stat st;
++    char *file;
++
++    file = malloc (strlen (ConfDir) + 1 + strlen (dent->d_name) + 1);
++    if (!file)
++      {
++        dbg_printf ("cannot allocate space for configuration filename\n");
++        return;
++      }
++
++    sprintf(file, "%s/%s", ConfDir, dent->d_name);
++
++    if (stat(file, &st) != 0)
++      {
++        dbg_printf ("cannot stat file configuration file\n");
++        continue;
++      }
++
++    if (S_ISREG(st.st_mode))
++      load_conffile(file, nextp);
++
++    free(file);
++  }
++
++  closedir(dir);
++}
++
+ /* INIT -- Initialize syslogd from configuration table.  */
+ RETSIGTYPE
+ init (int signo ARG_UNUSED)
+@@ -1714,7 +1769,7 @@ init (int signo ARG_UNUSED)
+   /* Foreach line in the conf table, open that file.  */
+   f = NULL;
+ 
+-  load_conffile (ConfFile, nextp);
++  load_confdir (nextp);
+ 
+   Initialized = 1;
+ 

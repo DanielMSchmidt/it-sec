@@ -1,0 +1,78 @@
+---
+ ifconfig/flags.h  |    2 ++
+ telnetd/telnetd.h |    2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+--- a/telnetd/telnetd.h
++++ b/telnetd/telnetd.h
+@@ -45,7 +45,7 @@
+ #ifdef HAVE_SYS_PTYVAR_H
+ # include <sys/ptyvar.h>
+ #endif
+-#ifdef HAVE_STROPTS_H
++#if 0
+ # include <stropts.h>
+ #endif
+ #include <sys/ioctl.h>
+--- a/ifconfig/flags.h
++++ b/ifconfig/flags.h
+@@ -22,6 +22,8 @@
+ #ifndef IFCONFIG_FLAGS_H
+ # define IFCONFIG_FLAGS_H
+ 
++# include <sys/types.h>
++
+ /* Using these avoid strings with if_flagtoname, the caller can set a
+    preference on returned flag names.  If one of the names in the list
+    is found for the flag, the search continues to attempt a better
+--- a/ifconfig/flags.c
++++ b/ifconfig/flags.c
+@@ -391,22 +391,48 @@ struct if_flag_char
+    That's the way netstat does it.
+ */
+ static struct if_flag_char flag_char_tab[] = {
++#ifdef IFF_ALLMULTI
+   { IFF_ALLMULTI,    'A' },
++#endif
++#ifdef IFF_BROADCAST
+   { IFF_BROADCAST,   'B' },
++#endif
++#ifdef IFF_DEBUG
+   { IFF_DEBUG,       'D' },
++#endif
++#ifdef IFF_LOOPBACK
+   { IFF_LOOPBACK,    'L' },
++#endif
++#ifdef IFF_MULTICAST
+   { IFF_MULTICAST,   'M' },
++#endif
+ #ifdef HAVE_DYNAMIC
+   { IFF_DYNAMIC,     'd' },
+ #endif
++#ifdef IFF_PROMISC
+   { IFF_PROMISC,     'P' },
++#endif
++#ifdef IFF_NOTRAILERS
+   { IFF_NOTRAILERS,  'N' },
++#endif
++#ifdef IFF_NOARP
+   { IFF_NOARP,       'O' },
++#endif
++#ifdef IFF_POINTOPOINT
+   { IFF_POINTOPOINT, 'P' },
++#endif
++#ifdef IFF_SLAVE
+   { IFF_SLAVE,       's' },
++#endif
++#ifdef IFF_MASTER
+   { IFF_MASTER,      'm' },
++#endif
++#ifdef IFF_RUNNING
+   { IFF_RUNNING,     'R' },
++#endif
++#ifdef IFF_UP
+   { IFF_UP,          'U' },
++#endif
+   { 0 }
+ };
+ 

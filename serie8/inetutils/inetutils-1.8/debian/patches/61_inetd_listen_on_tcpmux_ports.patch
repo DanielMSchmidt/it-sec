@@ -1,0 +1,27 @@
+From 929968ce1e0a5a72d929982e00e68a09b9a996c3 Mon Sep 17 00:00:00 2001
+From: Guillem Jover <guillem@hadrons.org>
+Date: Mon, 6 Sep 2010 09:00:58 +0200
+Subject: [PATCH] inetd: Listen on ports for tcpmux services
+
+* src/inetd.c (fix_tcpmux): Call expand_enter instead of enter for
+tcpmux services.
+---
+ src/inetd.c |    6 ++----
+ 1 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/src/inetd.c b/src/inetd.c
+index 354ae1d..1c51a51 100644
+--- a/src/inetd.c
++++ b/src/inetd.c
+@@ -1249,7 +1247,7 @@ fix_tcpmux (void)
+       if (debug)
+ 	fprintf (stderr, "inserting default tcpmux entry\n");
+       syslog (LOG_INFO, "inserting default tcpmux entry");
+-      enter (&serv);
++      expand_enter (&serv);
+     }
+ }
+ 
+-- 
+1.7.1
+

@@ -24,6 +24,9 @@ inetdaemon_PROGRAMS =
 bin_PROGRAMS =
 EXTRA_PROGRAMS =
 
+LDADD = \
+	../libinetutils/libinetutils.a \
+	../lib/libgnu.a
 
 bin_PROGRAMS += @hostname_BUILD@
 hostname_SOURCES = hostname.c
@@ -35,6 +38,7 @@ EXTRA_PROGRAMS += logger
 
 bin_PROGRAMS += @rcp_BUILD@
 rcp_SOURCES = rcp.c
+rcp_LDADD = $(LDADD) $(LIBAUTH)
 EXTRA_PROGRAMS += rcp
 
 bin_PROGRAMS += @rexec_BUILD@
@@ -43,10 +47,12 @@ EXTRA_PROGRAMS += rexec
 
 bin_PROGRAMS += @rlogin_BUILD@
 rlogin_SOURCES = rlogin.c
+rlogin_LDADD = $(LDADD) $(LIBAUTH)
 EXTRA_PROGRAMS += rlogin
 
 bin_PROGRAMS += @rsh_BUILD@
 rsh_SOURCES = rsh.c
+rsh_LDADD = $(LDADD) $(LIBAUTH)
 EXTRA_PROGRAMS += rsh
 
 bin_PROGRAMS += @tftp_BUILD@
@@ -55,6 +61,7 @@ EXTRA_PROGRAMS += tftp
 
 bin_PROGRAMS += @traceroute_BUILD@
 traceroute_SOURCES = traceroute.c
+traceroute_LDADD = ../libicmp/libicmp.a $(LDADD)
 EXTRA_PROGRAMS += traceroute
 
 inetdaemon_PROGRAMS += @inetd_BUILD@
@@ -63,19 +70,24 @@ EXTRA_PROGRAMS += inetd
 
 inetdaemon_PROGRAMS += @rexecd_BUILD@
 rexecd_SOURCES = rexecd.c
+rexecd_LDADD = $(LDADD) $(LIBCRYPT)
 EXTRA_PROGRAMS += rexecd
 
 inetdaemon_PROGRAMS += @rlogind_BUILD@
 rlogind_SOURCES = rlogind.c
+rlogind_LDADD = $(LDADD) $(LIBUTIL) $(LIBAUTH)
 EXTRA_PROGRAMS += rlogind
 
 inetdaemon_PROGRAMS += @rshd_BUILD@
 rshd_SOURCES = rshd.c
+rshd_LDADD = $(LDADD) $(LIBAUTH)
 EXTRA_PROGRAMS += rshd
 
 inetdaemon_PROGRAMS += @syslogd_BUILD@
 syslogd_SOURCES = syslogd.c
 EXTRA_PROGRAMS += syslogd
+
+dist_sysconf_DATA = syslog.conf
 
 inetdaemon_PROGRAMS += @tftpd_BUILD@
 tftpd_SOURCES = tftpd.c
@@ -83,18 +95,14 @@ EXTRA_PROGRAMS += tftpd
 
 inetdaemon_PROGRAMS += @uucpd_BUILD@
 uucpd_SOURCES = uucpd.c
+uucpd_LDADD = $(LDADD) $(LIBUTIL) $(LIBCRYPT)
 EXTRA_PROGRAMS += uucpd
 
 INCLUDES = -I$(top_srcdir)/lib \
 	-I$(top_srcdir)/libinetutils \
 	-I$(top_srcdir)/libicmp
 
-LDADD = -L$(top_builddir)/libicmp -licmp \
-	-L$(top_builddir)/libinetutils -linetutils \
-	-L$(top_builddir)/lib ../lib/libgnu.a \
-	$(LIBAUTH) $(LIBCRYPT) $(LIBUTIL)
-
-AM_CPPFLAGS = $(PATHDEF_BSHELL) $(PATHDEF_CONSOLE) $(PATHDEF_CP) $(PATHDEF_DEFPATH) $(PATHDEF_DEV) $(PATHDEF_INETDCONF) $(PATHDEF_INETDDIR) $(PATHDEF_INETDPID) $(PATHDEF_KLOG) $(PATHDEF_LOG) $(PATHDEF_LOGCONF) $(PATHDEF_LOGIN) $(PATHDEF_LOGPID) $(PATHDEF_NOLOGIN) $(PATHDEF_RLOGIN) $(PATHDEF_RSH) $(PATHDEF_TTY) $(PATHDEF_UTMP) $(PATHDEF_UUCICO)
+AM_CPPFLAGS = $(PATHDEF_BSHELL) $(PATHDEF_CONSOLE) $(PATHDEF_CP) $(PATHDEF_DEFPATH) $(PATHDEF_DEV) $(PATHDEF_INETDCONF) $(PATHDEF_INETDDIR) $(PATHDEF_INETDPID) $(PATHDEF_KLOG) $(PATHDEF_LOG) $(PATHDEF_LOGCONF) $(PATHDEF_LOGCONFD) $(PATHDEF_LOGIN) $(PATHDEF_LOGPID) $(PATHDEF_NOLOGIN) $(PATHDEF_RLOGIN) $(PATHDEF_RSH) $(PATHDEF_TTY) $(PATHDEF_UTMP) $(PATHDEF_UUCICO)
 
 SUIDMODE = -o root -m 4775
 

@@ -92,6 +92,7 @@ public class MoreComplexWebServer {
   }
 
   private boolean valid(String pathname) {
+    // TODO: Use http://stackoverflow.com/questions/3598407/fully-qualified-path-vs-canonical-path
     return !(pathname.contains("/../") || pathname.contains("//"));
   }
 

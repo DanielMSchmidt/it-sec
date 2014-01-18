@@ -1,0 +1,30 @@
+commit c4956d533efbc0972bf97ed66e1b867e92b4d56f
+Author: Mats Erik Andersson <gnu@gisladisker.se>
+Date:   Tue Oct 26 22:48:15 2010 +0200
+
+    telnetd/telnetd.c: Reuse address length. Needed for OpenBSD.
+    
+    Signed-off-by: Simon Josefsson <simon@josefsson.org>
+
+diff --git a/telnetd/telnetd.c b/telnetd/telnetd.c
+index b72cd73..b155087 100644
+--- a/telnetd/telnetd.c
++++ b/telnetd/telnetd.c
+@@ -300,7 +300,7 @@ telnetd_setup (int fd)
+     }
+ 
+ #ifdef IPV6
+-  err = getnameinfo ((struct sockaddr *) &saddr, sizeof (saddr), buf,
++  err = getnameinfo ((struct sockaddr *) &saddr, len, buf,
+ 		     sizeof (buf), NULL, 0, NI_NUMERICHOST);
+   if (err)
+     {
+@@ -317,7 +317,7 @@ telnetd_setup (int fd)
+ 
+   /* We use a second buffer so we don't have to call getnameinfo again
+      if we need the numeric host below.  */
+-  err = getnameinfo ((struct sockaddr *) &saddr, sizeof (saddr), buf2,
++  err = getnameinfo ((struct sockaddr *) &saddr, len, buf2,
+ 		     sizeof (buf2), NULL, 0, NI_NAMEREQD);
+ 
+   if (reverse_lookup)

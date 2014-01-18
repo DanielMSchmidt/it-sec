@@ -26,7 +26,7 @@ EXTRA_DIST = README-alpha paths ChangeLog.0
 SUBDIRS = lib \
 	libinetutils libtelnet libicmp libls \
 	src telnet telnetd ftp ftpd talk talkd whois ping ifconfig \
-	doc man \
+	doc \
 	tests
 
 DISTCLEANFILES = pathdefs.make paths.defs $(PACKAGE)-$(VERSION).tar.gz

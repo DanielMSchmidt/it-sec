@@ -378,6 +378,7 @@ static int
 send_echo (PING * ping)
 {
   int off = 0;
+  int rc;
 
   if (PING_TIMING (data_length))
     {
@@ -390,7 +391,12 @@ send_echo (PING * ping)
     ping_set_data (ping, data_buffer, off,
 		   data_length > PING_HEADER_LEN ?
 		   data_length - PING_HEADER_LEN : data_length, USE_IPV6);
-  return ping_xmit (ping);
+
+  rc = ping_xmit (ping);
+  if (rc < 0)
+    error (EXIT_FAILURE, errno, "sending packet");
+
+  return rc;
 }
 
 static int
@@ -781,7 +787,7 @@ ping_xmit (PING * p)
   i = sendto (p->ping_fd, (char *) p->ping_buffer, buflen, 0,
 	      (struct sockaddr *) &p->ping_dest.ping_sockaddr6, sizeof (p->ping_dest.ping_sockaddr6));
   if (i < 0)
-    perror ("ping: sendto");
+    return -1;
   else
     {
       p->ping_num_xmit++;

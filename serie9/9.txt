@@ -1,0 +1,5 @@
+9.1
+Put ' OR 1=1 #  in the name field
+
+9.2
+mysqli_real_escape_string ALL THE FIELDS before inserting (http://de1.php.net/manual/en/mysqli.real-escape-string.php)

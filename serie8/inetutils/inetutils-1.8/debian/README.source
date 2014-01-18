@@ -1,0 +1,4 @@
+There's a script to help generate or update tarballs from git snapshots:
+
+	$ debian/tarball.sh snapshot
+

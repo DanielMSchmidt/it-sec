@@ -1,6 +1,3 @@
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
-
 Format: 3.0 (quilt)
 Source: inetutils
 Binary: inetutils-ftp, inetutils-ftpd, inetutils-inetd, inetutils-ping, inetutils-traceroute, inetutils-syslogd, inetutils-talk, inetutils-talkd, inetutils-telnet, inetutils-telnetd, inetutils-tools
@@ -27,18 +24,10 @@ Package-List:
  inetutils-traceroute deb net extra
 Checksums-Sha1: 
  598445859b511f73681e4d74a41d65cd6ae0f83e 1853512 inetutils_1.8.orig.tar.gz
- aba10e6bcaa9e483d6194aae237bdaa78fa63074 84105 inetutils_1.8-6.debian.tar.gz
+ 6eb6e6446a942b41979728ebc3e42de583145a4d 81867 inetutils_1.8-6.debian.tar.gz
 Checksums-Sha256: 
  c8500baee04b9ea408c9e65e24ad7f5b41e7d96d42fb1d29abf25b52b68311c7 1853512 inetutils_1.8.orig.tar.gz
- 356b0f10efad09491338d45e1164e410ae33ee5b242d92fe5521ec274f8fae6f 84105 inetutils_1.8-6.debian.tar.gz
+ 4ee8af3e60dccac4d7d5c6d0342afb06bcfced9557555ed813254b56e351c892 81867 inetutils_1.8-6.debian.tar.gz
 Files: 
  ad8fdcdf1797b9ca258264a6b04e48fd 1853512 inetutils_1.8.orig.tar.gz
- 671d23f59700b05e20a23c6bac9ca9c5 84105 inetutils_1.8-6.debian.tar.gz
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iEYEARECAAYFAk76d30ACgkQuW9ciZ2SjJvYBQCcCQie3MSAN8BzGzwD1gYgOvmK
-Wk0AnRARdU6iQ+59BDctZJ/A7TBpjlFV
-=cr3m
------END PGP SIGNATURE-----
+ 312a5e1c8aac721b3fd6aa87f9354195 81867 inetutils_1.8-6.debian.tar.gz
