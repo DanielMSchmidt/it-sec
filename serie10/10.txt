@@ -7,5 +7,8 @@
 5. run a b
 
 
+Lösung: ncd a (ganz viele zeichen)
+
+
 11.1
 
