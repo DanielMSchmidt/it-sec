@@ -1,0 +1,11 @@
+10.1
+
+1. vagrant up && vagrant ssh
+2. cd /vagrant/serie10 && gdb ncd
+3. break main
+4. disassamble main
+5. run a b
+
+
+11.1
+
